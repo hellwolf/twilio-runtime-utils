@@ -1,0 +1,12 @@
+{
+  "name": "twilio-runtime-utils",
+  "version": "1.0.0",
+  "description": "Utilities for developing twilio runtime applications",
+  "repository": "https://code.hq.twilio.com/zmiao/twilio-runtime-utils",
+  "license": "MIT",
+  "dependencies": {
+    "argparse": "^1.0.9",
+    "path": "^0.12.7",
+    "yamljs": "^0.2.10"
+  }
+}

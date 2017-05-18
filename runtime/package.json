@@ -1,0 +1,9 @@
+{
+  "name": "twilio-runtime-emu",
+  "version": "1.0.0",
+  "description": "Twilio runtime emulation environment",
+  "dependencies": {
+    "twilio": "^3.0.0"
+  }
+}
+
