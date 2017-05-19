@@ -89,7 +89,7 @@ function runtimeFunctionCallback(err, result) {
         console.error("Error: " + err);
         return;
     }
-    console.log(result);
+    process.stdout.write(JSON.stringify(result));
 }
 
 function runRuntimeFunction(globalContext, functionDescriptor, eventFile) {
