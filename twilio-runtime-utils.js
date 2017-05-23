@@ -2,11 +2,11 @@
 'use strict';
 
 var fs = require('fs');
-var path = require("path");
 var ArgumentParser = require('argparse').ArgumentParser;
-var YAML = require('yamljs');
-
-const runtimePath = path.resolve(__dirname, 'runtime', 'node_modules');
+var Descriptor = require('./Descriptor.js');
+var FunctionDescriptor = require('./FunctionDescriptor.js');
+var Context = require('./Context.js');
+var TwilioRuntimeHelper = require("./runtime/TwilioRuntimeHelper.js");
 
 function extend(obj, src) {
     Object.keys(src).forEach(function(key) { obj[key] = src[key]; });
@@ -36,7 +36,7 @@ var subparsers = parser.addSubparsers({
 
 var runCommandParser = subparsers.addParser('run', {
     addHelp: true,
-    description: 'run function locally with test data'
+    description: 'run function locally with test data files'
 });
 runCommandParser.addArgument(
     ['descriptor'],
@@ -48,6 +48,23 @@ runCommandParser.addArgument(
     ['event'],
     {
         help: 'test event yaml'
+    }
+);
+
+var runCommandParser = subparsers.addParser('runjson', {
+    addHelp: true,
+    description: 'run function locally with test data json'
+});
+runCommandParser.addArgument(
+    ['descriptor'],
+    {
+        help: 'function descriptor json'
+    }
+);
+runCommandParser.addArgument(
+    ['event'],
+    {
+        help: 'test event json'
     }
 );
 
@@ -63,78 +80,24 @@ deployCommandParser.addArgument(
 );
 
 ////////////////////////////////////////////////////////////
-// common
-////////////////////////////////////////////////////////////
-function loadFunctionDescriptor(descriptorFile, descriptor) {
-    descriptor.resolvePath = function (f) {
-        return path.resolve(path.dirname(descriptorFile), f);
-    };
-    descriptor.scriptPath = descriptor.resolvePath(descriptor.script);
-    if (descriptor.includes) {
-        descriptor.includesCode = {};
-        descriptor.includes.forEach(function (f) {
-            let includeFile = descriptor.resolvePath(f);
-            let code = fs.readFileSync(includeFile, 'utf8');
-            descriptor.includesCode[f] =code;
-        });
-    }
-    return descriptor;
-}
-
-////////////////////////////////////////////////////////////
-// command: run
-////////////////////////////////////////////////////////////
-function runtimeFunctionCallback(err, result) {
-    if (err) {
-        console.error("Error: " + err);
-        return;
-    }
-    process.stdout.write(JSON.stringify(result));
-}
-
-function runRuntimeFunction(globalContext, functionDescriptor, eventFile) {
-    global.Twilio = require("twilio");
-
-    let event = 'null' === args.event ? null : YAML.load(eventFile);
-
-    for (let f in functionDescriptor.includesCode) {
-        let code = functionDescriptor.includesCode[f];
-        eval(code);
-    };
-    let functionModule = module.require(functionDescriptor.scriptPath);
-    functionModule.handler(globalContext, event, runtimeFunctionCallback);
-}
-
-////////////////////////////////////////////////////////////
 // command: deploy
 ////////////////////////////////////////////////////////////
-function createFunctionBundle(functionDescriptor) {
+function deployFunction(functionDescriptor) {
     let spliter = "================================================================================\n";
+
     process.stdout.write(spliter);
     process.stdout.write("== create new function if needed\n");
     process.stdout.write("== set function path to: " + functionDescriptor.path + "\n");
     process.stdout.write("== switch off \"access control\"\n");
     process.stdout.write("== copy paste the script to function code area\n");
+
     process.stdout.write(spliter);
-    let bundle = "";
-    for (let f in functionDescriptor.includesCode) {
-        let code = functionDescriptor.includesCode[f];
-        bundle += "// Include: " + f + "\n";
-        bundle += code;
-        bundle += "\n";
-    };
-    bundle += "// Main script: " + functionDescriptor.script + "\n";
-    bundle += fs.readFileSync(functionDescriptor.scriptPath);
+    let bundle = FunctionDescriptor.createBundle(functionDescriptor);
     process.stdout.write(bundle);
 
     process.stdout.write(spliter);
-    process.stdout.write("== switch on \"Enable ACCOUNT_SID and AUTH_TOKEN\"\n");
-    process.stdout.write("== configure context variables according to this table\n");
-    for (let k in globalContext) {
-        if (k === "ACCOUNT_SID") continue;
-        if (k === "AUTH_TOKEN") continue;
-        process.stdout.write(k + "\t: " + globalContext[k] + "\n");
-    }
+    var context = Context.load(args.context);
+    Context.deploy(context);
 }
 
 ////////////////////////////////////////////////////////////
@@ -142,29 +105,22 @@ function createFunctionBundle(functionDescriptor) {
 ////////////////////////////////////////////////////////////
 var args = parser.parseArgs();
 
-// load global context
-var globalContext = YAML.load(args.context);
-// conver all value to JSON string format
-for (let k in globalContext) {
-    if (typeof globalContext[k] === "object") {
-        globalContext[k] = JSON.stringify(globalContext[k]);
+function runResultHandler(err, result) {
+    if (err) {
+        console.error(err);
+    } else {
+        console.log(result);
     }
 }
 
 /*****/if ('run' === args.command_name) {
-    let descriptorFile = args.descriptor;
-    let descriptor = YAML.load(descriptorFile);
-    if (descriptor.type !== "function") {
-        return console.error("descriptor is of wrong type: " + functionDescriptor.type);
-    }
-    let functionDescriptor = loadFunctionDescriptor(descriptorFile, descriptor);
-    runRuntimeFunction(globalContext, functionDescriptor, args.event);
+    TwilioRuntimeHelper.runTestDataFile(args.context, args.descriptor, args.event == null ? "" : args.event, runResultHandler);
+} else if ('runjson' === args.command_name) {
+    TwilioRuntimeHelper.runTestDataJSON(args.context, args.descriptor, args.event, runResultHandler);
 } else if ('deploy' === args.command_name) {
-    let descriptorFile = args.descriptor;
-    let descriptor = YAML.load(descriptorFile);
+    var descriptor = Descriptor.load(args.descriptor);
     if (descriptor.type === "function") {
-        let functionDescriptor = loadFunctionDescriptor(descriptorFile, descriptor);
-        createFunctionBundle(functionDescriptor);
+        deployFunction(descriptor);
     } else {
         console.error("descriptor is of unknown type: " + args.descriptor.type);
     }

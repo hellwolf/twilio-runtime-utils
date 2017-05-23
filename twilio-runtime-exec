@@ -1,0 +1,4 @@
+#!/bin/sh
+
+export NODE_PATH=$(dirname $0)/runtime:$NODE_PATH
+exec "$@"
