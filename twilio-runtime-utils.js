@@ -116,7 +116,7 @@ function runResultHandler(err, result) {
 /*****/if ('run' === args.command_name) {
     TwilioRuntimeHelper.runTestDataFile(args.context, args.descriptor, args.event == null ? "" : args.event, runResultHandler);
 } else if ('runjson' === args.command_name) {
-    TwilioRuntimeHelper.runTestDataJSON(args.context, args.descriptor, args.event, runResultHandler);
+    TwilioRuntimeHelper.runTestDataJSON(args.context, args.descriptor, JSON.parse(args.event), runResultHandler);
 } else if ('deploy' === args.command_name) {
     var descriptor = Descriptor.load(args.descriptor);
     if (descriptor.type === "function") {
