@@ -1,4 +1,4 @@
 #!/bin/sh
 
-export NODE_PATH=$(dirname $0)/runtime:$NODE_PATH
+export NODE_PATH=$(dirname $0)/runtime:$(dirname $0)/runtime/node_modules:$NODE_PATH
 exec "$@"

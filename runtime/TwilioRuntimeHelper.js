@@ -2,22 +2,32 @@ var child_process = require('child_process');
 var path = require("path");
 
 function parseChildResult(child, done) {
-    var err = "";
-    var data = "";
-    child.stdout.on('data', function (d) {
-        data += d;
-    });
-    child.stderr.on('data', function (d) {
-        err += d;
-    });
-    child.on('exit', function(code, signal) {
-        if (code === 0) {
-            done(null, JSON.parse(data));
-        } else {
-            console.error(err);
-            done("Child exited with code: " + code + (signal?" and signal: " + signal:""));
-        }
-    });
+    let resolver = (resolve, reject) => {
+        var err = "";
+        var data = "";
+        child.stdout.on('data', function (d) {
+            data += d;
+        });
+        child.stderr.on('data', function (d) {
+            err += d;
+        });
+        child.on('exit', function(code, signal) {
+            if (code === 0) {
+                resolve(JSON.parse(data));
+            } else {
+                console.error(err);
+                reject("Child exited with code: " + code + (signal?" and signal: " + signal:""));
+            }
+        });
+    }
+
+    if (!done) {
+        promise = new Promise(resolver);
+        done = (err, done) => { if (err) p.reject(err); else p.resolve(done) };
+        return promise;
+    } else {
+        resolver((result) => done(null, result), (err) => done(err));
+    }
 }
 
 module.exports = {
