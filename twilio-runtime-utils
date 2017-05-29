@@ -1,3 +1,5 @@
 #!/bin/sh
 
-exec node $(dirname $0)/twilio-runtime-utils.js "$@"
+D="$(dirname "$0")"
+export NODE_PATH=$D/runtime/node_modules:$NODE_PATH
+exec node $D/twilio-runtime-utils.js "$@"
