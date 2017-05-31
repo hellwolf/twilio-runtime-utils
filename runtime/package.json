@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "Twilio runtime emulation environment",
   "dependencies": {
-    "twilio": "^3.0.0"
+    "twilio": "3.3.0-alpha-1"
   }
 }
-
