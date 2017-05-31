@@ -9,13 +9,20 @@ function runtimeFunctionCallback(err, result) {
     process.stdout.write(JSON.stringify(result));
 }
 
+function setupContext(context) {
+    context.getTwilioClient = function () {
+        return Twilio(context.ACCOUNT_SID, context.AUTH_TOKEN);
+    }
+}
+
 function runScript(descriptor, context, event) {
     for (let f in descriptor._includesCode) {
         let code = descriptor._includesCode[f];
         eval(code);
     };
 
-    global.Twilio = require("twilio");        
+    global.Twilio = require("twilio");
+    setupContext(context);
 
     let functionModule = require(descriptor._scriptPath);
     functionModule.handler(context, event, runtimeFunctionCallback);
