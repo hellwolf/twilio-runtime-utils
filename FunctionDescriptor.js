@@ -16,8 +16,8 @@ module.exports = {
 
     createBundle: function(functionDescriptor) {
         let bundle = "";
-        for (let f in functionDescriptor.includesCode) {
-            let code = functionDescriptor.includesCode[f];
+        for (let f in functionDescriptor._includesCode) {
+            let code = functionDescriptor._includesCode[f];
             bundle += "// Include: " + f + "\n";
             bundle += code;
             bundle += "\n";
