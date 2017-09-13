@@ -1,8 +1,13 @@
 {
   "name": "twilio-runtime-emu",
   "version": "1.0.0",
-  "description": "Twilio runtime emulation environment",
+  "description": "Twilio runtime emulation environment, reference: https://www.twilio.com/console/runtime/functions/configure",
   "dependencies": {
-    "twilio": "3.3.0-alpha-1"
+    "fs": "0.0.1-security",
+    "util": "0.10.3",
+    "lodash": "4.17.4",
+    "xmldom": "0.1.27",
+    "got": "6.7.1",
+    "twilio": "3.6.3"
   }
 }
