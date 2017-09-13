@@ -13,6 +13,7 @@ function parseChildResult(child, done) {
         });
         child.on('exit', function(code, signal) {
             if (code === 0) {
+                if (err) console.log(err);
                 resolve(JSON.parse(data));
             } else {
                 console.error(err);
