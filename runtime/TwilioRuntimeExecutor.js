@@ -6,7 +6,18 @@ function runtimeFunctionCallback(err, result) {
     if (err) {
         throw("Error: " + err);
     }
-    process.stdout.write(JSON.stringify(result));
+    let cache = [];
+    process.stdout.write(JSON.stringify(result, function(key, value) {
+        if (typeof value === 'object' && value !== null) {
+            if (cache.indexOf(value) !== -1) {
+                // Circular reference found, discard key
+                return;
+            }
+            // Store value in our collection
+            cache.push(value);
+        }
+        return value;
+    }));
 }
 
 function setupContext(context) {
